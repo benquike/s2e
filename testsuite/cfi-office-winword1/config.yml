@@ -1,0 +1,22 @@
+test:
+    description: "This tests that cfi checker works properly on a clean document"
+
+    options:
+        tools:
+            - "cfi"
+            - "tickler"
+        single_path: true
+
+    targets:
+        - "$(GUEST_FS)/program files/microsoft office/office14/winword.exe"
+        - "$(GUEST_FS)/program files/microsoft office/office15/winword.exe"
+        - "$(GUEST_FS)/program files/microsoft office/root/office16/winword.exe"
+        - "$(GUEST_FS)/program files (x86)/microsoft office/office14/winword.exe"
+        - "$(GUEST_FS)/program files (x86)/microsoft office/office15/winword.exe"
+        - "$(GUEST_FS)/program files (x86)/microsoft office/root/office16/winword.exe"
+
+    target_arguments:
+        - $(TEST_ROOT)/test.docx
+
+    target-images:
+        - office
