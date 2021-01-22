@@ -28,7 +28,7 @@
 namespace vmi {
 
 ExecutableFile::ExecutableFile(std::shared_ptr<FileProvider> file, bool loaded, uint64_t loadAddress)
-    : m_file(file), m_loaded(loaded), m_loadAddress(loadAddress) {
+    : m_file(file), m_loaded(loaded), m_loadAddress(loadAddress), m_functionsInited(false) {
 }
 
 ExecutableFile::~ExecutableFile() {
@@ -60,4 +60,37 @@ std::shared_ptr<ExecutableFile> ExecutableFile::get(std::shared_ptr<FileProvider
 
     return nullptr;
 }
+
+// push    ebp
+// mov     ebp, esp
+// sub     esp, ...
+static const uint8_t s_prolog1[] = {0x55, 0x8b, 0xec, 0x81, 0xec};
+
+const FunctionAddresses &ExecutableFile::guessFunctionAddresses() const {
+    if (m_functionsInited) {
+        return m_functions;
+    }
+
+    for (auto &s : getSections()) {
+        if (!s.executable) {
+            continue;
+        }
+
+        for (auto i = 0; i < s.size; ++i) {
+            uint8_t buffer[sizeof(s_prolog1)];
+            auto size = sizeof(buffer);
+            if (read(buffer, size, s.start + i) != size) {
+                break;
+            }
+
+            if (!memcmp(buffer, s_prolog1, sizeof(s_prolog1))) {
+                m_functions.push_back(s.start + i);
+            }
+        }
+    }
+
+    m_functionsInited = true;
+    return m_functions;
+}
+
 } // namespace vmi
